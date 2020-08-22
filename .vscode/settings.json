@@ -1,3 +1,5 @@
 {
-    "python.pythonPath": "/Users/johanduplessis/.miniconda3/envs/wither/bin/python"
+    "python.pythonPath": "/Users/johanduplessis/.miniconda3/envs/wither/bin/python",
+    "python.formatting.provider": "black",
+    "editor.formatOnSave": true
 }

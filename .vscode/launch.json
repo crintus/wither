@@ -1,0 +1,32 @@
+{
+    "configurations": [
+        {
+            "name": "Docker: Python - Django",
+            "type": "docker",
+            "request": "launch",
+            "preLaunchTask": "docker-run: debug",
+            "python": {
+                "pathMappings": [
+                    {
+                        "localRoot": "${workspaceFolder}",
+                        "remoteRoot": "/app"
+                    }
+                ],
+                "projectType": "django"
+            }
+        },
+        {
+            "name": "Run Django",
+            "type": "python",
+            "request": "attach",
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}",
+                    "remoteRoot": "/app"
+                }
+            ],
+            "port": 3000,
+            "host": "0.0.0.0",
+        }
+    ]
+}
