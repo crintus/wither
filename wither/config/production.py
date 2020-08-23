@@ -4,6 +4,8 @@ from .common import Common
 
 
 class Production(Common):
+    DEBUG = os.getenv("DEBUG", False)
+
     INSTALLED_APPS = Common.INSTALLED_APPS
     MIDDLEWARE = Common.MIDDLEWARE
     SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
