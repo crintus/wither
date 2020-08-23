@@ -1,7 +1,11 @@
 import os
 import requests
-import functools
+import statistics
 from datetime import datetime
+
+
+class OpenWeatherMapClientError(Exception):
+    pass
 
 
 class OpenWeatherMapClient:
@@ -15,82 +19,87 @@ class OpenWeatherMapClient:
     api_key = os.environ.get("OPEN_WEATHER_API_KEY")
     base_url = os.environ.get("OPEN_WEATHER_BASE_URL")
 
+    @property
+    def daily_data(self):
+        return self.data.get("daily", [])
+
     def __init__(
         self, lat: str, lon: str,
     ):
         self.lat = lat
         self.lon = lon
-        self.data = None
-        self.filtered_data = None
+        self.data = self.__get()
 
-    def filter(self, date_start: int = None, date_end: int = None):
-        # Store as datetime object for better manipulation
-        # Set hours and minutes to only work with the day timestamps of the consumed api
-        date_start = (
-            datetime.fromtimestamp(date_start).replace(hour=12, minute=0, second=0)
-            if date_start
-            else None
-        )
-        date_end = (
-            datetime.fromtimestamp(date_end).replace(hour=12, minute=0, second=0)
-            if date_end
-            else None
-        )
-
-        date_start_timestamp = int(date_start.timestamp())
-        self.data = self.__get(date_start_timestamp).get("daily")
-        self.filtered_data = self.data
-        # Filter our date based on the selected dates
-        if date_start:
-            self.filtered_data = list(
+    def filter(self, period_start: int = None, period_end: int = None) -> None:
+        if period_start:
+            dt_start = datetime.fromtimestamp(period_start).replace(minute=0, second=0)
+            self.data["daily"] = list(
                 filter(
-                    lambda daily: datetime.fromtimestamp(daily.get("dt")) > date_start,
-                    self.filtered_data,
+                    lambda daily: datetime.fromtimestamp(daily.get("dt")) >= dt_start,
+                    self.daily_data,
                 )
             )
-        if date_end:
-            self.filtered_data = list(
+        if period_end:
+            dt_end = datetime.fromtimestamp(period_end).replace(minute=0, second=0)
+            self.data["daily"] = list(
                 filter(
-                    lambda daily: datetime.fromtimestamp(daily.get("dt")) < date_end,
-                    self.filtered_data,
+                    lambda daily: datetime.fromtimestamp(daily.get("dt")) <= dt_end,
+                    self.daily_data,
                 )
             )
 
-    def average(self):
+    def average_temp(self):
         return round(
             sum(
                 [
-                    (day["temp"]["min"] + day["temp"]["max"]) / 2
-                    for day in self.filtered_data
+                    sum(day["temp"].values()) / len(day["temp"])
+                    for day in self.daily_data
                 ]
             )
-            / len(self.filtered_data),
+            / len(self.daily_data),
             2,
         )
 
-    def max(self):
-        return max([day["temp"]["max"] for day in self.filtered_data])
+    def max_temp(self):
+        return max([day["temp"]["max"] for day in self.daily_data])
 
-    def min(self):
-        return min([day["temp"]["min"] for day in self.filtered_data])
+    def min_temp(self):
+        return min([day["temp"]["min"] for day in self.daily_data])
+
+    def median_temp(self):
+        from itertools import chain
+
+        merged_list = chain.from_iterable(
+            [list(day["temp"].values()) for day in self.daily_data]
+        )
+        return round(statistics.median(sorted(merged_list)), 2)
+
+    def average_humidity(self):
+        return round(
+            sum([day["humidity"] for day in self.daily_data]) / len(self.daily_data), 2,
+        )
+
+    def max_humidity(self):
+        return round(max([day["humidity"] for day in self.daily_data]), 2)
+
+    def min_humidity(self):
+        return round(min([day["humidity"] for day in self.daily_data]), 2)
+
+    def median_humidity(self):
+        return round(
+            statistics.median(sorted([day["humidity"] for day in self.daily_data])), 2
+        )
 
     def get(self):
-        return self.__get()
+        self.data = self.__get()
+        return self.data
 
-    def __date_start_filter(self, daily, date_start):
-        date_object = datetime.fromtimestamp(daily.get("dt"))
-        return date_object > date_start
-
-    def __date_end_filter(self, daily, date_end):
-        date_object = datetime.fromtimestamp(daily.get("dt"))
-        return date_object < date_end
-
-    def __get(self, date_start):
+    def __get(self, period_start: int = None):
         query_params = dict(
             appid=self.api_key,
             lat=self.lat,
             lon=self.lon,
-            dt=date_start,
+            dt=period_start,
             exclude="current,minutely,hourly",
             units="metric",
         )

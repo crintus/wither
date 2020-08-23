@@ -8,10 +8,11 @@ from rest_framework.routers import DefaultRouter
 # from rest_framework.authtoken import views
 
 # from .users.views import UserViewSet, UserCreateViewSet
-from wither.weather.views import WeatherViewSet
+from wither.weather.views import WeatherViewSet, WeatherSummaryViewSet
 
 router = DefaultRouter()
 router.register(r"weather", WeatherViewSet, basename="weather")
+router.register(r"weather/summary", WeatherSummaryViewSet, basename="weather-summary")
 # router.register(r'users', UserViewSet)
 # router.register(r'users', UserCreateViewSet)
 

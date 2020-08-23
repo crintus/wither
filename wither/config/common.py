@@ -21,7 +21,6 @@ class Common(Configuration):
         "rest_framework.authtoken",  # token authentication
         "django_filters",  # for filtering rest endpoints
         # Your apps
-        "wither.users",
         "wither.open_weather_map",
     )
 
@@ -160,7 +159,7 @@ class Common(Configuration):
     }
 
     # Custom user app
-    AUTH_USER_MODEL = "users.User"
+    # AUTH_USER_MODEL = "users.User"
 
     # Django Rest Framework
     REST_FRAMEWORK = {

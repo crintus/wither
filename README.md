@@ -1,8 +1,5 @@
 # wither
 
-[![Build Status](https://travis-ci.org/crintus/wither.svg?branch=master)](https://travis-ci.org/crintus/wither)
-[![Built with](https://img.shields.io/badge/Built_with-Cookiecutter_Django_Rest-F7B633.svg)](https://github.com/agconti/cookiecutter-django-rest)
-
 An API that returns the min, max, average and median temperature and humidity for given city and period of time.
 
 # Prerequisites

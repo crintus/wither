@@ -1,12 +1,8 @@
-import requests
 import mock
+from django.urls import reverse
+from rest_framework.test import APITestCase
+from rest_framework import status
 
-from django.test import TestCase
-from wither.open_weather_map.client import OpenWeatherMapClient
-
-
-# Make a copy of this dict when using it as a mock response because the dict ID is shared
-# across tests and will cause failures
 MOCK_RESPONSE = {
     "lat": 33.44,
     "lon": -94.04,
@@ -236,115 +232,42 @@ MOCK_RESPONSE = {
 }
 
 
-class OpenWeatherMapClientTestCase(TestCase):
-    def setUp(self, *args, **kwargs) -> None:
-        self.lat = "33.9249"
-        self.lon = "18.4241"
-
-    def test_get(self) -> None:
-        wither = OpenWeatherMapClient(self.lat, self.lon)
-        with mock.patch.object(requests, "get") as get:
-            wither.get()
-        get.assert_called_with(
-            f"{wither.base_url}",
-            params=dict(
-                appid=OpenWeatherMapClient.api_key,
-                lat=self.lat,
-                lon=self.lon,
-                dt=None,
-                exclude="current,minutely,hourly",
-                units="metric",
-            ),
-        )
+class TestWeatherViewSetTestCase(APITestCase):
+    def setUp(self) -> None:
+        self.url = reverse("weather-list")
 
     @mock.patch(
-        "wither.open_weather_map.client.OpenWeatherMapClient._OpenWeatherMapClient__get"
+        "wither.open_weather_map.client.OpenWeatherMapClient.get",
+        side_effect=lambda: MOCK_RESPONSE,
     )
-    def test_filter_one_day(self, mock_response) -> None:
-        mock_response.return_value = MOCK_RESPONSE.copy()
-        wither = OpenWeatherMapClient(self.lat, self.lon)
-        self.assertDictEqual(wither.data, MOCK_RESPONSE)
-        wither.filter(1598292000, 1598292000)
-        self.assertEqual(len(wither.data["daily"]), 1)
+    def test_list(self, *args, **kwargs) -> None:
+        response = self.client.get(self.url, dict(location="Cape Town"))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, MOCK_RESPONSE)
 
-    @mock.patch(
-        "wither.open_weather_map.client.OpenWeatherMapClient._OpenWeatherMapClient__get"
-    )
-    def test_filter_from_start(self, mock_response) -> None:
-        mock_response.return_value = MOCK_RESPONSE.copy()
-        wither = OpenWeatherMapClient(self.lat, self.lon)
-        self.assertDictEqual(wither.data, MOCK_RESPONSE)
-        wither.filter(1598292000)
-        self.assertEqual(len(wither.data["daily"]), 4)
+    def test_list_location_not_provided(self) -> None:
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, ["The location query paramater is required."])
 
-    @mock.patch(
-        "wither.open_weather_map.client.OpenWeatherMapClient._OpenWeatherMapClient__get"
-    )
-    def test_average_temp(self, mock_response) -> None:
-        mock_response.return_value = MOCK_RESPONSE.copy()
-        wither = OpenWeatherMapClient(self.lat, self.lon)
-        wither.filter(1598205600, 1598292000)
-        self.assertEqual(wither.average_temp(), 26.99)
 
-    @mock.patch(
-        "wither.open_weather_map.client.OpenWeatherMapClient._OpenWeatherMapClient__get",
-    )
-    def test_max_temp(self, mock_response) -> None:
-        mock_response.return_value = MOCK_RESPONSE.copy()
-        wither = OpenWeatherMapClient(self.lat, self.lon)
-        wither.filter(1598205600, 1598292000)
-        self.assertEqual(wither.max_temp(), 34.39)
+class TestWeatherSummaryViewSetTestCase(APITestCase):
+    def setUp(self) -> None:
+        self.url = reverse("weather-summary-list")
 
-    @mock.patch(
-        "wither.open_weather_map.client.OpenWeatherMapClient._OpenWeatherMapClient__get",
-    )
-    def test_min_temp(self, mock_response) -> None:
-        mock_response.return_value = MOCK_RESPONSE.copy()
-        wither = OpenWeatherMapClient(self.lat, self.lon)
-        wither.filter(1598205600, 1598292000)
-        self.assertEqual(wither.min_temp(), 20.28)
+    def test_list_location_not_provided(self) -> None:
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, ["The location query paramater is required."])
 
-    @mock.patch(
-        "wither.open_weather_map.client.OpenWeatherMapClient._OpenWeatherMapClient__get",
-    )
-    def test_median_temp(self, mock_response) -> None:
-        mock_response.return_value = MOCK_RESPONSE.copy()
-        wither = OpenWeatherMapClient(self.lat, self.lon)
-        wither.filter(1598205600, 1598292000)
-        self.assertEqual(wither.median_temp(), 26.88)
+    def test_list_invalid_location(self) -> None:
+        response = self.client.get(self.url, dict(location="qqqqq"))
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, ["Invalid location."])
 
-    @mock.patch(
-        "wither.open_weather_map.client.OpenWeatherMapClient._OpenWeatherMapClient__get",
-    )
-    def test_average_humidity(self, mock_response) -> None:
+    @mock.patch("wither.open_weather_map.client.OpenWeatherMapClient.get",)
+    def test_list_without_period_set(self, mock_response) -> None:
         mock_response.return_value = MOCK_RESPONSE.copy()
-        wither = OpenWeatherMapClient(self.lat, self.lon)
-        wither.filter(1598205600, 1598292000)
-        self.assertEqual(wither.average_humidity(), 39.0)
-
-    @mock.patch(
-        "wither.open_weather_map.client.OpenWeatherMapClient._OpenWeatherMapClient__get",
-    )
-    def test_max_humidity(self, mock_response) -> None:
-        mock_response.return_value = MOCK_RESPONSE.copy()
-        wither = OpenWeatherMapClient(self.lat, self.lon)
-        wither.filter(1598205600, 1598292000)
-        self.assertEqual(wither.max_humidity(), 41)
-
-    @mock.patch(
-        "wither.open_weather_map.client.OpenWeatherMapClient._OpenWeatherMapClient__get",
-    )
-    def test_min_humidity(self, mock_response) -> None:
-        mock_response.return_value = MOCK_RESPONSE.copy()
-        wither = OpenWeatherMapClient(self.lat, self.lon)
-        wither.filter(1598205600, 1598292000)
-        self.assertEqual(wither.min_humidity(), 37)
-
-    @mock.patch(
-        "wither.open_weather_map.client.OpenWeatherMapClient._OpenWeatherMapClient__get",
-    )
-    def test_median_humidity(self, mock_response) -> None:
-        mock_response.return_value = MOCK_RESPONSE.copy()
-        wither = OpenWeatherMapClient(self.lat, self.lon)
-        wither.filter(1598205600, 1598292000)
-        self.assertEqual(wither.median_humidity(), 39.0)
+        response = self.client.get(self.url, dict(location="Cape Town"))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # TODO: assert response data
