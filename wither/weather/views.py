@@ -1,3 +1,5 @@
+from typing import Dict
+
 from rest_framework import permissions
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
@@ -14,7 +16,15 @@ class WeatherViewSet(ViewSet):
 
     permission_classes = (permissions.AllowAny,)
 
-    def validate_query_params(self, params):
+    def validate_query_params(self, params: Dict) -> None:
+        """Validated the query params
+
+        Args:
+            params (dict): query params
+
+        Raises:
+            ValidationError: If the params are invalid
+        """
         if not params.get("location"):
             raise ValidationError("The location query paramater is required.")
 
@@ -39,7 +49,15 @@ class WeatherSummaryViewSet(ViewSet):
 
     permission_classes = (permissions.AllowAny,)
 
-    def validate_query_params(self, params):
+    def validate_query_params(self, params: Dict) -> None:
+        """Validated the query params
+
+        Args:
+            params (dict): query params
+
+        Raises:
+            ValidationError: If the params are invalid
+        """
         if not params.get("location"):
             raise ValidationError("The location query paramater is required.")
 

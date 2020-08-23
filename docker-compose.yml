@@ -22,11 +22,3 @@ services:
       - "3000:3000"
     depends_on:
       - postgres
-  documentation:
-    restart: always
-    build: ./
-    command: "mkdocs serve"
-    volumes:
-      - ./:/app
-    ports:
-      - "8001:8001"

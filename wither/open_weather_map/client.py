@@ -1,6 +1,7 @@
 import os
 import requests
 import statistics
+from typing import Dict
 from datetime import datetime
 
 
@@ -13,7 +14,6 @@ class OpenWeatherMapClient:
     API client for the Open weather map API
     Supports:
         Daily forecast for 7 days
-        Historical data for the previous 5 days
     """
 
     api_key = os.environ.get("OPEN_WEATHER_API_KEY")
@@ -31,6 +31,13 @@ class OpenWeatherMapClient:
         self.data = self.__get()
 
     def filter(self, period_start: int = None, period_end: int = None) -> None:
+        """
+        Filters the data based on the start and end periods
+
+        Args:
+            period_start (int, optional): [Timestamp of the period start]. Defaults to None.
+            period_end (int, optional): [Timestamp of the period end]. Defaults to None.
+        """
         if period_start:
             dt_start = datetime.fromtimestamp(period_start).replace(minute=0, second=0)
             self.data["daily"] = list(
@@ -48,7 +55,7 @@ class OpenWeatherMapClient:
                 )
             )
 
-    def average_temp(self):
+    def average_temp(self) -> float:
         return round(
             sum(
                 [
@@ -60,13 +67,13 @@ class OpenWeatherMapClient:
             2,
         )
 
-    def max_temp(self):
-        return max([day["temp"]["max"] for day in self.daily_data])
+    def max_temp(self) -> float:
+        return round(max([day["temp"]["max"] for day in self.daily_data]), 2)
 
-    def min_temp(self):
-        return min([day["temp"]["min"] for day in self.daily_data])
+    def min_temp(self) -> float:
+        return round(min([day["temp"]["min"] for day in self.daily_data]), 2)
 
-    def median_temp(self):
+    def median_temp(self) -> float:
         from itertools import chain
 
         merged_list = chain.from_iterable(
@@ -74,27 +81,27 @@ class OpenWeatherMapClient:
         )
         return round(statistics.median(sorted(merged_list)), 2)
 
-    def average_humidity(self):
+    def average_humidity(self) -> float:
         return round(
             sum([day["humidity"] for day in self.daily_data]) / len(self.daily_data), 2,
         )
 
-    def max_humidity(self):
+    def max_humidity(self) -> float:
         return round(max([day["humidity"] for day in self.daily_data]), 2)
 
-    def min_humidity(self):
+    def min_humidity(self) -> float:
         return round(min([day["humidity"] for day in self.daily_data]), 2)
 
-    def median_humidity(self):
+    def median_humidity(self) -> float:
         return round(
             statistics.median(sorted([day["humidity"] for day in self.daily_data])), 2
         )
 
-    def get(self):
+    def get(self) -> None:
         self.data = self.__get()
         return self.data
 
-    def __get(self, period_start: int = None):
+    def __get(self, period_start: int = None) -> Dict:
         query_params = dict(
             appid=self.api_key,
             lat=self.lat,

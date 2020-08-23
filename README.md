@@ -23,6 +23,8 @@ I'm also not super happy about how I designed this and think I could've done bet
 I'll share a .env file with Lucian with the API key in.
 I'm not protective of it, but it's still an API key and shouldn't go in repos.
 
+**Make sure you have added the .env file**
+
 Start the dev server for local development:
 ```bash
 docker-compose up
@@ -46,6 +48,10 @@ Everything should be contained in the docker containers.
 If packages need to be installed outside, use a virtual environment (I use miniconda):
 ```bash
 conda create --name wither python=3.8
+```
+Then pip install
+```bash
+pip install -r requirements.txt
 ```
 
 # Production (Heroku)
