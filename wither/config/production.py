@@ -26,5 +26,9 @@ class Production(Common):
     # https://warehouse.python.org/project/whitenoise/
     STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
+    # Logging Overrides
+    LOGGING = Common.LOGGING
+    LOGGING["handlers"]["django.server"]["level"] = "DEBUG" if DEBUG else "INFO"
+
     # Activate Django-Heroku.
     django_heroku.settings(locals())
